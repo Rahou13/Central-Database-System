@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FBI Central Database System</title>
+    <style>
+        :root {
+            --bg-color: #0b0f19;
+            --card-bg: #131c2e;
+            --card-hover: #1e293b;
+            --accent: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.3);
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border: #1e293b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 15px;
+            line-height: 1.6;
+        }
+
+        body.modal-open {
+            overflow: hidden;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            padding: 20px 0;
+            border-bottom: 2px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: #60a5fa;
+            margin: 0;
+            font-size: 1.7rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+
+        .section-title {
+            color: #93c5fd;
+            border-right: 4px solid var(--accent);
+            padding-right: 8px;
+            margin: 25px 0 12px 0;
+            font-size: 1.15rem;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 12px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            position: relative;
+            outline: none;
+        }
+
+        .card:hover,
+        .card:focus {
+            background-color: var(--card-hover);
+            border-color: var(--accent);
+            box-shadow: 0 0 10px var(--accent-glow);
+            transform: translateY(-2px);
+        }
+
+        .card h3 {
+            margin: 0 0 4px 0;
+            font-size: 1.05rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .card .ar-name {
+            color: #93c5fd;
+            font-size: 0.9rem;
+            margin: 0 0 6px 0;
+        }
+
+        .card .desc {
+            margin: 0;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .badge {
+            background-color: #1e40af;
+            color: #93c5fd;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-family: monospace;
+            white-space: nowrap;
+        }
+
+        .points-card {
+            cursor: default;
+        }
+
+        .points-card:hover {
+            transform: none;
+            box-shadow: none;
+            background-color: var(--card-bg);
+            border-color: var(--border);
+        }
+
+        .points-card h3 {
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .points-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            color: var(--text-muted);
+        }
+
+        .points-list li {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 0;
+            border-bottom: 1px dashed var(--border);
+        }
+
+        .points-list li:last-child {
+            border-bottom: none;
+        }
+
+        .points-list .pts {
+            background-color: #14532d;
+            color: #86efac;
+            padding: 2px 10px;
+            border-radius: 10px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+
+        /* نافذة التفاصيل المنبثقة (Modal) */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 15px;
+            box-sizing: border-box;
+        }
+
+        .modal-content {
+            background-color: #131c2e;
+            border: 1px solid var(--accent);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 25px 20px 20px 20px;
+            box-sizing: border-box;
+            position: relative;
+            text-align: center;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: var(--danger);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 0;
+        }
+
+        .modal-header {
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 12px;
+            margin-bottom: 15px;
+        }
+
+        .modal-header h2 {
+            margin: 0 0 8px 0;
+            color: #60a5fa;
+            font-size: 1.3rem;
+        }
+
+        .type-tag {
+            display: inline-block;
+            background-color: #1e40af;
+            color: #dbeafe;
+            padding: 3px 12px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+        }
+
+        .info-group {
+            margin-bottom: 14px;
+        }
+
+        .info-group strong {
+            color: #93c5fd;
+            display: block;
+            margin-bottom: 4px;
+        }
+
+        .info-group p {
+            margin: 0;
+            color: var(--text-muted);
+            font-size: 0.92rem;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--text-muted);
+            font-size: 0.8rem;
+            border-top: 1px solid var(--border);
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <header>
+            <h1>FBI Central Database System</h1>
+            <p>اضغط على أي رتبة أو فرقة أو جناح لعرض التفاصيل كاملة</p>
+            <p>Click on any rank, division, or wing to view full details</p>
+        </header>
+
+        <!-- قسم الرتب والأكواد -->
+        <div class="section-title">أولاً: الرتب والأكواد | First: Ranks & Codes</div>
+        <div class="grid">
+            <div class="card" tabindex="0" onclick="openModal('rank-a')">
+                <h3>High Command <span class="badge">A</span></h3>
+                <p class="ar-name">القيادة العليا</p>
+                <p class="desc">Director & Deputy Director</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-b')">
+                <h3>Inspector General <span class="badge">B</span></h3>
+                <p class="ar-name">المفتش العام</p>
+                <p class="desc">Inspector</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-c')">
+                <h3>Commander <span class="badge">C</span></h3>
+                <p class="ar-name">الكومندان</p>
+                <p class="desc">Commander</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-d')">
+                <h3>Captain <span class="badge">D</span></h3>
+                <p class="ar-name">الكابتن</p>
+                <p class="desc">Captain</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-e')">
+                <h3>Tactical Elite <span class="badge">E</span></h3>
+                <p class="ar-name">النخبة والأخصائيون</p>
+                <p class="desc">Tactical Specialist & Elite</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-f')">
+                <h3>Special Agents <span class="badge">F</span></h3>
+                <p class="ar-name">الوكلاء الخاصون</p>
+                <p class="desc">Special Agent & Senior</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-g')">
+                <h3>Field Agents <span class="badge">G</span></h3>
+                <p class="ar-name">الوكلاء الميدانيون</p>
+                <p class="desc">Field Agent & Senior</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-h')">
+                <h3>Patrol Agents <span class="badge">H</span></h3>
+                <p class="ar-name">الدوريات والمبتدئون</p>
+                <p class="desc">Junior & Patrol Agent</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('rank-i')">
+                <h3>Recruits <span class="badge">I</span></h3>
+                <p class="ar-name">المتدربون</p>
+                <p class="desc">Recruit Agent</p>
+            </div>
+        </div>
+
+        <!-- قسم الفرق الميدانية -->
+        <div class="section-title">ثانياً: الفرق الميدانية | Field Divisions</div>
+        <div class="grid">
+            <div class="card" tabindex="0" onclick="openModal('div-ftd')">
+                <h3>Field Tactical Division <span class="badge">FTD</span></h3>
+                <p class="ar-name">فرقة التكتيكات الميدانية</p>
+                <p class="desc">Assaults & Rapid Intervention</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('div-id')">
+                <h3>Intelligence Division <span class="badge">ID</span></h3>
+                <p class="ar-name">فرقة الاستخبارات</p>
+                <p class="desc">Investigations & Gang Monitoring</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('div-ud')">
+                <h3>Undercover Division <span class="badge">UD</span></h3>
+                <p class="ar-name">فرقة العمليات السرية</p>
+                <p class="desc">Infiltration & Asset Planting</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('div-cru')">
+                <h3>Crisis Response Unit <span class="badge">CRU</span></h3>
+                <p class="ar-name">وحدة الاستجابة للأزمات</p>
+                <p class="desc">Negotiation & Emergency Management</p>
+            </div>
+        </div>
+
+        <!-- قسم أجنحة التدريب -->
+        <div class="section-title">ثالثاً: أجنحة التدريب | Training Wings</div>
+        <div class="grid">
+            <div class="card" tabindex="0" onclick="openModal('wing-taw')">
+                <h3>Tactical Assault Wing <span class="badge">TAW</span></h3>
+                <p class="ar-name">جناح الاقتحام</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('wing-iw')">
+                <h3>Intelligence Wing <span class="badge">IW</span></h3>
+                <p class="ar-name">جناح الاستخبارات</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('wing-uw')">
+                <h3>Undercover Wing <span class="badge">UW</span></h3>
+                <p class="ar-name">جناح التسلل</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('wing-cnw')">
+                <h3>Crisis Negotiation Wing <span class="badge">CNW</span></h3>
+                <p class="ar-name">جناح التفاوض</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('wing-ssw')">
+                <h3>Sniper Support Wing <span class="badge">SSW</span></h3>
+                <p class="ar-name">جناح القنص</p>
+            </div>
+            <div class="card" tabindex="0" onclick="openModal('wing-mw')">
+                <h3>Management Wing <span class="badge">MW</span></h3>
+                <p class="ar-name">جناح القيادة والتدريب</p>
+            </div>
+        </div>
+
+        <!-- قسم جدول المهام والنقاط -->
+        <div class="section-title">رابعاً: نظام النقاط والمهام | Points & Tasks System</div>
+        <div class="card points-card">
+            <h3>جدول نقاط المهام | Mission Points Table</h3>
+            <ul class="points-list">
+                <li>
+                    <span>القبض على مطلوب في الميدان</span>
+                    <span class="pts">+10 نقاط</span>
+                </li>
+                <li>
+                    <span>المشاركة في مداهمة ناجحة</span>
+                    <span class="pts">+15 نقطة</span>
+                </li>
+                <li>
+                    <span>إنقاذ رهينة / تفاوض ناجح</span>
+                    <span class="pts">+25 نقطة</span>
+                </li>
+                <li>
+                    <span>تقديم تقرير استخباراتي سري مفيد</span>
+                    <span class="pts">+20 نقطة</span>
+                </li>
+                <li>
+                    <span>تدريب مجند جديد</span>
+                    <span class="pts">+15 نقطة</span>
+                </li>
+                <li>
+                    <span>إحباط عملية سرقة أو تسلل</span>
+                    <span class="pts">+30 نقطة</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="footer">
+            FBI Central Database System &copy; All Rights Reserved
+            <br>
+            مشروع تخيلي لأغراض الرول بلاي | Fictional project for roleplay purposes
+        </div>
+    </div>
+
+    <!-- نافذة العرض المنبثقة (Modal Container) -->
+    <div id="detailModal" class="modal" onclick="outsideClose(event)" role="dialog" aria-modal="true">
+        <div class="modal-content">
+            <button class="close-btn" onclick="closeModal()" aria-label="إغلاق">×</button>
+            <div id="modalBody">
+                <!-- يتم تعبئة المحتوى ديناميكياً عبر الجافاسكريبت -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ===== أسماء الحقول حسب نوع العنصر =====
+        const labels = {
+            rank: ['الصلاحيات والمهام', 'الحدود والمسؤوليات', 'النقاط والشروط'],
+            div:  ['شروط الانضمام', 'المهام والاختصاص', 'الجناح المطلوب'],
+            wing: ['طريقة الحصول عليه', 'مخصص لـ', 'نوع التقييم']
+        };
+
+        // ===== أسماء الأنواع بالعربي =====
+        const typeNames = {
+            rank: 'رتبة',
+            div:  'فرقة ميدانية',
+            wing: 'جناح تدريبي'
+        };
+
+        // ===== قاعدة البيانات =====
+        const db = {
+            'rank-a': {
+                type: 'rank',
+                title: 'High Command [A] (القيادة العليا)',
+                info: [
+                    'إدارة الوكالة بالكامل، صلاحية تعيين وفصل الوكلاء، تغيير القوانين والسياسات، وإعلان حالات الطوارئ القصوى.',
+                    'مسؤولون أمام الإدارة العليا للسيرفر عن أداء الوكالة ككل.',
+                    'رتبة قيادية عليا (لا تتطلب نقاط ترقية، بل تعيين سيادي وإداري).'
+                ]
+            },
+            'rank-b': {
+                type: 'rank',
+                title: 'Inspector General [B] (المفتش العام)',
+                info: [
+                    'إجراء التحقيقات الداخلية مع الوكلاء المخالفين، مراقبة أداء الفرق، وصلاحية إيقاف أي عضو مؤقتاً.',
+                    'لا يتدخل في العمليات الميدانية المباشرة إلا بتكليف خاص من المدير.',
+                    'تتطلب إثبات كفاءة عالية وتراكم خبرة وسجل نظيف.'
+                ]
+            },
+            'rank-c': {
+                type: 'rank',
+                title: 'Commander [C] (الكومندان)',
+                info: [
+                    'الإشراف الكامل على الفرق الميدانية والاستخباراتية، توزيع المهام، وإصدار أوامر التفتيش.',
+                    'يخضع لتوجيهات المفتش والمدير ولا يملك صلاحية الطرد المباشر.',
+                    'تتطلب جمع 400 نقطة أداء واجتياز اختبار إداري.'
+                ]
+            },
+            'rank-d': {
+                type: 'rank',
+                title: 'Captain [D] (الكابتن)',
+                info: [
+                    'قيادة فرقة التكتيكات الميدانية (FTD) في المداهمات، وتوزيع العناصر أثناء العمليات.',
+                    'يتحمل المسؤولية الكاملة عن نجاح أو فشل المجموعات التابعة له ميدانياً.',
+                    'تتطلب جمع 300 نقطة ميدانية.'
+                ]
+            },
+            'rank-e': {
+                type: 'rank',
+                title: 'Tactical Elite [E] (النخبة والأخصائيون)',
+                info: [
+                    'تنفيذ المهام الصعبة والمعقدة والدعم الناري المتقدم.',
+                    'الالتزام بأوامر الكابتن وعدم التصرف الفردي.',
+                    'تتطلب جمع 220 نقطة.'
+                ]
+            },
+            'rank-f': {
+                type: 'rank',
+                title: 'Special Agents [F] (الوكلاء الخاصون)',
+                info: [
+                    'إدارة العمليات الخاصة والتسلل وجمع الأدلة الحساسة.',
+                    'ممنوع التدخل في صلاحيات القيادة.',
+                    'تتطلب جمع 150 نقطة.'
+                ]
+            },
+            'rank-g': {
+                type: 'rank',
+                title: 'Field Agents [G] (الوكلاء الميدانيون)',
+                info: [
+                    'القبض على المجرمين، تسيير الدوريات، والمشاركة الفعالة في المداهمات.',
+                    'العمل تحت إمرة الكابتن أو الوكلاء الأعلى.',
+                    'تتطلب جمع 90 نقطة.'
+                ]
+            },
+            'rank-h': {
+                type: 'rank',
+                title: 'Patrol Agents [H] (الدوريات والمبتدئون)',
+                info: [
+                    'القيام بدوريات المراقبة الروتينية ومساعدة الوكلاء الأقدم.',
+                    'ممنوع المشاركة في العمليات السرية أو الكبرى بمفردهم.',
+                    'تتطلب جمع 40 نقطة للترقي.'
+                ]
+            },
+            'rank-i': {
+                type: 'rank',
+                title: 'Recruits [I] (المتدربون)',
+                info: [
+                    'تلقي التدريبات الأساسية والتعلم الميداني.',
+                    'ممنوع الخروج للميدان دون مرافقة مدرب أو وكيل أقدم.',
+                    'نقطة البداية (0 نقطة).'
+                ]
+            },
+            'div-ftd': {
+                type: 'div',
+                title: 'Field Tactical Division [FTD] (فرقة التكتيكات الميدانية)',
+                info: [
+                    'رتبة Field Agent فما فوق + اجتياز تدريب الاقتحام.',
+                    'مختصة بالاقتحامات الكبرى وتحرير الرهائن واستخدام القوة.',
+                    'الحصول على [TAW] الإجباري.'
+                ]
+            },
+            'div-id': {
+                type: 'div',
+                title: 'Intelligence Division [ID] (فرقة الاستخبارات)',
+                info: [
+                    'رتبة Senior Field Agent فما فوق + خلو السجل من العقوبات.',
+                    'مختصة بجمع الأدلة الرقمية ومراقبة تحركات العصابات.',
+                    'الحصول على [IW] الإجباري.'
+                ]
+            },
+            'div-ud': {
+                type: 'div',
+                title: 'Undercover Division [UD] (فرقة العمليات السرية)',
+                info: [
+                    'رتبة Special Agent فما فوق + ثقة مطلقة من الإدارة.',
+                    'التسلل الكامل لداخل العصابات دون كشف الهوية الحقيقية.',
+                    'الحصول على [UW] الإجباري.'
+                ]
+            },
+            'div-cru': {
+                type: 'div',
+                title: 'Crisis Response Unit [CRU] (وحدة الاستجابة للأزمات)',
+                info: [
+                    'رتبة Elite Agent أو قائد ميداني.',
+                    'إدارة أزمات الخطف الكبرى والتفاوض المباشر مع المجرمين.',
+                    'الحصول على [CNW] الإجباري.'
+                ]
+            },
+            'wing-taw': {
+                type: 'wing',
+                title: 'Tactical Assault Wing [TAW] (جناح الاقتحام)',
+                info: [
+                    'اجتياز اختبار الرماية الحية وسرعة الاقتحام العملي.',
+                    'عناصر فرقة التكتيكات (FTD).',
+                    'اختبار عملي ميداني من الكابتن.'
+                ]
+            },
+            'wing-iw': {
+                type: 'wing',
+                title: 'Intelligence Wing [IW] (جناح الاستخبارات)',
+                info: [
+                    'اختبار فك التشفير وكتابة التقارير السرية.',
+                    'عناصر فرقة الاستخبارات (ID).',
+                    'اختبار تحريري وميداني.'
+                ]
+            },
+            'wing-uw': {
+                type: 'wing',
+                title: 'Undercover Wing [UW] (جناح التسلل)',
+                info: [
+                    'اختبار كتمان الأسرار وإدارة الهوية البديلة.',
+                    'عناصر فرقة العمليات السرية (UD).',
+                    'تقييم سري من القيادة.'
+                ]
+            },
+            'wing-cnw': {
+                type: 'wing',
+                title: 'Crisis Negotiation Wing [CNW] (جناح التفاوض)',
+                info: [
+                    'دورية تدريبية في كيفية التعامل مع الرهائن تحت الضغط.',
+                    'عناصر وحدة الاستجابة للأزمات (CRU).',
+                    'اختبار محاكاة أزمة.'
+                ]
+            },
+            'wing-ssw': {
+                type: 'wing',
+                title: 'Sniper Support Wing [SSW] (جناح القنص)',
+                info: [
+                    'تحقيق أعلى درجات الإصابة في اختبار القنص بعيد المدى.',
+                    'الوكلاء الميدانيون المميزون.',
+                    'اختبار دقة الرماية.'
+                ]
+            },
+            'wing-mw': {
+                type: 'wing',
+                title: 'Management Wing [MW] (جناح القيادة والتدريب)',
+                info: [
+                    'تدريب 5 أعضاء جدد (Recruits) وتوصية من الكومندان.',
+                    'المدربون والضباط.',
+                    'تقييم إداري شامل.'
+                ]
+            }
+        };
+
+        // ===== فتح النافذة وتعبئة المحتوى =====
+        function openModal(key) {
+            const data = db[key];
+            if (!data) return;
+
+            const fieldLabels = labels[data.type];
+
+            const html = `
+                <div class="modal-header">
+                    <h2>${data.title}</h2>
+                    <span class="type-tag">النوع: ${typeNames[data.type]}</span>
+                </div>
+                <div class="info-group">
+                    <strong>${fieldLabels[0]}</strong>
+                    <p>${data.info[0]}</p>
+                </div>
+                <div class="info-group">
+                    <strong>${fieldLabels[1]}</strong>
+                    <p>${data.info[1]}</p>
+                </div>
+                <div class="info-group">
+                    <strong>${fieldLabels[2]}</strong>
+                    <p>${data.info[2]}</p>
+                </div>
+            `;
+
+            document.getElementById('modalBody').innerHTML = html;
+            document.getElementById('detailModal').style.display = 'flex';
+            document.body.classList.add('modal-open');
+        }
+
+        // ===== إغلاق النافذة =====
+        function closeModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            document.body.classList.remove('modal-open');
+        }
+
+        // الإغلاق عند الضغط على الخلفية
+        function outsideClose(event) {
+            if (event.target.id === 'detailModal') {
+                closeModal();
+            }
+        }
+
+        // الإغلاق بزر Escape
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') {
+                closeModal();
+            }
+        });
+
+        // فتح البطاقات بزر Enter من الكيبورد
+        document.querySelectorAll('.card[tabindex="0"]').forEach(function (card) {
+            card.addEventListener('keydown', function (e) {
+                if (e.key === 'Enter') {
+                    card.click();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>
